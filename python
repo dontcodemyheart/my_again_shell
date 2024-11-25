@@ -1,0 +1,57 @@
+import re
+
+class MyAgainShell:
+    def __init__(self):
+        self.variables = {}
+
+    def evaluate_expression(self, expr):
+        # Поддерживаем только базовые арифметические операции
+        return eval(expr, {}, self.variables)
+
+    def parse_assignment(self, statement):
+        var_name, expr = statement.split('=')
+        var_name = var_name.strip()
+        expr = expr.strip()
+        self.variables[var_name] = self.evaluate_expression(expr)
+
+    def parse_conditional(self, statement):
+        condition_part = re.search(r'if (.*?) then', statement).group(1)
+        then_part = re.search(r'then (.*?) (else (.*?))? endif', statement, re.DOTALL)
+        if then_part:
+            then_statement = then_part.group(1).strip()
+            else_statement = then_part.group(3).strip() if then_part.group(3) else None
+            
+            condition = self.evaluate_expression(condition_part)
+            if condition:
+                self.execute_statement(then_statement)
+            elif else_statement:
+                self.execute_statement(else_statement)
+
+    def execute_statement(self, statement):
+        statement = statement.strip()
+        if '=' in statement:
+            self.parse_assignment(statement)
+        elif statement.startswith('if'):
+            self.parse_conditional(statement)
+        else:
+            print("Unknown statement:", statement)
+
+    def run(self, program):
+        statements = program.splitlines()
+        for statement in statements:
+            self.execute_statement(statement)
+
+# Пример использования
+if __name__ == "__main__":
+    shell = MyAgainShell()
+    program = """
+    x = 5
+    y = 10
+    if x < y then
+        z = x + y
+    else
+        z = y - x
+    endif
+    """
+    shell.run(program)
+    print("Variables:", shell.variables)
